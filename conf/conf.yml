@@ -1,0 +1,13 @@
+outers:
+  - outName : stdout
+    outType : console
+    outPath : /var/log/
+    outFormat :
+  - outName : error
+    outType : file
+    outPath : /var/log/
+    outFormat :
+  - outName : stdout
+    outType : console
+    outPath : /var/log/
+    outFormat :
