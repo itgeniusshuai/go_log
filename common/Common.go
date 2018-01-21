@@ -28,3 +28,20 @@ type LogInfo struct{
 	// 日志内容
 	Message string `json:"message"`
 }
+
+func GetLogLevelStr(level LogLevel) string{
+	var msg string
+	switch level {
+	case Debug:
+		msg = "Debug"
+	case Warning:
+		msg = "Warning"
+	case Info:
+		msg = "Info"
+	case Error:
+		msg = "Error"
+	case Fatal:
+		msg = "Fatal"
+	}
+	return msg
+}
