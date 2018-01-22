@@ -9,7 +9,7 @@ import (
 
 // 日志输出接口
 type LogOuter interface{
-	println(logInfo *common.LogInfo)
+	Println(logInfo *common.LogInfo)
 }
 
 // 控制台输出器
@@ -38,19 +38,19 @@ type CapacityCutFileLogOuter struct{
 	capacity string
 }
 
-func (this *ConsoleLogOuter) println(logInfo *common.LogInfo){
+func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
 	msgFormat := this.msgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
 	fmt.Println(msg)
 }
 
-func (this *TimeCutFileLogOuter) println(logInfo *common.LogInfo){
+func (this *TimeCutFileLogOuter) Println(logInfo *common.LogInfo){
 	msgFormat := this.msgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
 	fmt.Println(msg)
 }
 
-func (this *CapacityCutFileLogOuter) println(logInfo *common.LogInfo){
+func (this *CapacityCutFileLogOuter) Println(logInfo *common.LogInfo){
 	msgFormat := this.msgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
 	fmt.Println(msg)
