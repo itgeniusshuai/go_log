@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"regexp"
-	"time"
 )
 
 // 日志输出接口
@@ -22,6 +21,8 @@ type ConsoleLogOuter struct{
 type FileLogOuter struct{
 	msgFormat string
 	filePath string
+	buff string
+	buffSize int64
 
 }
 
