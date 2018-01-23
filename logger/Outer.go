@@ -5,6 +5,11 @@ import (
 	"fmt"
 	"strings"
 	"regexp"
+	"sync"
+	"time"
+	"os"
+	"sync/atomic"
+	"../helpers"
 )
 
 // 日志输出接口
@@ -21,9 +26,11 @@ type ConsoleLogOuter struct{
 type FileLogOuter struct{
 	msgFormat string
 	filePath string
+	fileNamePrefix string
 	buff string
-	buffSize int64
-
+	buffSize int
+	rwLock sync.RWMutex
+	buffLock sync.RWMutex
 }
 
 // 时间切分文件输出器
@@ -36,6 +43,33 @@ type TimeCutFileLogOuter struct{
 type CapacityCutFileLogOuter struct{
 	FileLogOuter
 	capacity string
+	lastFileId int64
+}
+
+func (this *FileLogOuter) wirteFile(){
+	this.rwLock.Lock()
+	defer this.rwLock.Unlock()
+	_,err := os.Open(this.filePath)
+	if err != nil{
+		os.MkdirAll(this.filePath,os.ModePerm)
+	}
+	fileName := this.filePath + "/" + this.getFileName() + ".log"
+	file, err := os.Open(fileName)
+	if err != nil{
+		file,_ = os.Create(fileName)
+	}
+	file.WriteString(this.buff)
+}
+
+func (this *FileLogOuter) getFileName() string{
+	switch v := this.(type) {
+	case TimeCutFileLogOuter:
+		return time.Now().Format(v.TimeFormat)
+	case CapacityCutFileLogOuter:
+		atomic.AddInt64(&v.lastFileId,1)
+		return v.fileNamePrefix + "_" + helpers.GetString(v.lastFileId)
+	}
+	return nil
 }
 
 func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
@@ -44,16 +78,15 @@ func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
 	fmt.Println(msg)
 }
 
-func (this *TimeCutFileLogOuter) Println(logInfo *common.LogInfo){
+func (this *FileLogOuter) Println(logInfo *common.LogInfo){
 	msgFormat := this.msgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
-	fmt.Println(msg)
-}
-
-func (this *CapacityCutFileLogOuter) Println(logInfo *common.LogInfo){
-	msgFormat := this.msgFormat
-	msg := parseMsgFormat(msgFormat,logInfo)
-	fmt.Println(msg)
+	this.buffLock.Lock()
+	this.buff = this.buff + msg
+	defer this.buffLock.Unlock()
+	if this.buffSize <= 0 || len(this.buff) >= this.buffSize {
+		this.wirteFile(logInfo)
+	}
 }
 
 /**

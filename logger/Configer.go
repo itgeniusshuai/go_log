@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"gopkg.in/yaml.v2"
 	"../common"
-	"fmt"
+	"time"
 )
 
 // 文件总配置文件
@@ -24,16 +24,31 @@ func InitConfig(logConfigPath string) error{
 	configInfo := ConfigInfo{}
 	yaml.Unmarshal(b,&configInfo)
 
-	// 启动所有的日志器监听binlog
-	for {
-		select {
-		case v := <- common.LogChannel:
-			// 遍历所有的outer
-			for _,logOuter := range configInfo.logOuters{
-				logOuter.Println(v)
+	// 启动所有的日志器监听log
+	go func (){
+		for {
+			select {
+			case v := <- common.LogChannel:
+				// 遍历所有的outer
+				for _,logOuter := range configInfo.logOuters{
+					logOuter.Println(v)
+				}
 			}
 		}
-	}
+	}()
+	// 启动定时写文件程序
+	go func (){
+		ticker := time.NewTicker(time.Second*30)
+		ticks := ticker.C
+		for _ = range ticks{
+			for _,logOuter := range configInfo.logOuters{
+				switch v := logOuter.(type) {
+				case FileLogOuter:
+					v.wirteFile()
+				}
+			}
+		}
+	}()
 	return nil
 }
 
