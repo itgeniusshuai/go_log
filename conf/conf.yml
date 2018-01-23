@@ -1,13 +1,19 @@
 outers:
-  - outName : stdout
-    outType : console
-    outPath : /var/log/
-    outFormat :
-  - outName : error
-    outType : file
-    outPath : /var/log/
-    outFormat :
-  - outName : stdout
-    outType : console
-    outPath : /var/log/
-    outFormat :
+  consoles :
+    - msgFormat : ""
+    - msgFormat : ""
+  timeCuts :
+    - msgFormat : ""
+      filePath : ""
+      fileNamePrefix : ""
+      buff : 1
+      buffSize : 23
+      timeFormat : "2006-01-02 03:04:05"
+
+  fileCuts :
+    - msgFormat : ""
+      filePath : ""
+      fileNamePrefix : ""
+      buff : 1
+      buffSize : 20
+      Capacity : 100

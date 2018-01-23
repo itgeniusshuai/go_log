@@ -23,6 +23,11 @@ type ConsoleLogOuter struct{
 }
 
 // 文件输出器
+// 获取文件名称，没有创建
+// 写入缓冲区
+// 缓冲区溢出写入文件
+// 清空缓冲区
+// 如果是容量切分，更新当前容量
 type FileLogOuter struct{
 	msgFormat string
 	filePath string
@@ -42,11 +47,12 @@ type TimeCutFileLogOuter struct{
 // 容量切分文件输出器
 type CapacityCutFileLogOuter struct{
 	FileLogOuter
-	capacity string
+	Capacity int64
 	lastFileId int64
+	currentCapacity int64
 }
 
-func (this *FileLogOuter) wirteFile(){
+func (this *TimeCutFileLogOuter) wirteFile(){
 	this.rwLock.Lock()
 	defer this.rwLock.Unlock()
 	_,err := os.Open(this.filePath)
@@ -59,17 +65,36 @@ func (this *FileLogOuter) wirteFile(){
 		file,_ = os.Create(fileName)
 	}
 	file.WriteString(this.buff)
+	this.buff = ""
 }
 
-func (this *FileLogOuter) getFileName() string{
-	switch v := this.(type) {
-	case TimeCutFileLogOuter:
-		return time.Now().Format(v.TimeFormat)
-	case CapacityCutFileLogOuter:
-		atomic.AddInt64(&v.lastFileId,1)
-		return v.fileNamePrefix + "_" + helpers.GetString(v.lastFileId)
+func (this *CapacityCutFileLogOuter) wirteFile(){
+	this.rwLock.Lock()
+	defer this.rwLock.Unlock()
+	_,err := os.Open(this.filePath)
+	if err != nil{
+		os.MkdirAll(this.filePath,os.ModePerm)
 	}
-	return nil
+	fileName := this.filePath + "/" + this.getFileName() + ".log"
+	file, err := os.Open(fileName)
+	if err != nil{
+		file,_ = os.Create(fileName)
+	}
+	file.WriteString(this.buff)
+	this.buff = ""
+	this.currentCapacity = int64(len(this.buff)) + this.currentCapacity
+}
+
+func (this *TimeCutFileLogOuter) getFileName() string{
+	return time.Now().Format(this.TimeFormat)
+}
+
+func (this *CapacityCutFileLogOuter) getFileName() string{
+		if this.currentCapacity >= this.Capacity{
+			atomic.AddInt64(&this.lastFileId,1)
+			this.currentCapacity = int64(0)
+		}
+		return this.fileNamePrefix + "_" + helpers.GetString(this.lastFileId)
 }
 
 func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
