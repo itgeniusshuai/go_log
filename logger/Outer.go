@@ -85,7 +85,7 @@ func (this *FileLogOuter) Println(logInfo *common.LogInfo){
 	this.buff = this.buff + msg
 	defer this.buffLock.Unlock()
 	if this.buffSize <= 0 || len(this.buff) >= this.buffSize {
-		this.wirteFile(logInfo)
+		this.wirteFile()
 	}
 }
 
