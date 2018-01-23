@@ -37,11 +37,11 @@ func InitConfig(logConfigPath string) error{
 				}
 				// 遍历所有的outer
 				for _,logOuter := range configInfo.timeCutOuters{
-					logOuter.Println(v)
+					logOuter.Println(v,logOuter)
 				}
 				// 遍历所有的outer
 				for _,logOuter := range configInfo.capacityCutOuters{
-					logOuter.Println(v)
+					logOuter.Println(v,logOuter)
 				}
 			}
 		}
@@ -52,10 +52,10 @@ func InitConfig(logConfigPath string) error{
 		ticks := ticker.C
 		for _ = range ticks{
 			for _,logOuter := range configInfo.capacityCutOuters{
-				logOuter.wirteFile()
+				logOuter.writeFile()
 			}
 			for _,logOuter := range configInfo.timeCutOuters{
-				logOuter.wirteFile()
+				logOuter.writeFile()
 			}
 		}
 	}()

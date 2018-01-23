@@ -1,18 +1,25 @@
 outers:
-  consoles :
-    - msgFormat : ""
-    - msgFormat : ""
-  timeCuts :
-    - msgFormat : ""
+  consoleOuters :
+    - msgFormat :
+        type: "json"
+      lessLevel : 2
+    - msgFormat :
+        type: "string"
+        format : "%m %t(2016-01-02) %msg"
+      lessLevel : 2
+  timeCutOuters :
+    - msgFormat :
+        type: "string"
+        format : "%m %t(2016-01-02) %msg"
       filePath : ""
       fileNamePrefix : ""
       buff : 1
       buffSize : 23
       timeFormat : "2006-01-02 03:04:05"
-
-  fileCuts :
-    - msgFormat : ""
-      filePath : ""
+  capacityCutOuters :
+    - msgFormat :
+        type: "string"
+        format : "%m %t(2016-01-02) %msg"  filePath : ""
       fileNamePrefix : ""
       buff : 1
       buffSize : 20

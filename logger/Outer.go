@@ -10,10 +10,11 @@ import (
 	"os"
 	"sync/atomic"
 	"../helpers"
+	"encoding/json"
 )
 
 // 日志输出接口
-type LogOuter interface{
+type LogOuterInterface interface{
 	Println(logInfo *common.LogInfo)
 }
 
@@ -21,9 +22,18 @@ type LogFileOuterInterface interface {
 	writeFile()
 }
 
+type MsgFormat struct{
+	Type string `yaml:"type"`
+	Format string `yaml:"format"`
+}
+
+type LogOuter struct {
+	MsgFormat MsgFormat `yaml:"msgFormat"`
+	LessLevel common.LogLevel `yaml:"lessLevel"`
+}
 // 控制台输出器
 type ConsoleLogOuter struct{
-	MsgFormat string `yaml:"msgFormat"`
+	LogOuter
 }
 
 // 文件输出器
@@ -33,13 +43,14 @@ type ConsoleLogOuter struct{
 // 清空缓冲区
 // 如果是容量切分，更新当前容量
 type FileLogOuter struct{
-	MsgFormat string `yaml:"msgFormat"`
+	LogOuter
 	FilePath string `yaml:"filePath"`
 	FileNamePrefix string `yaml:"fileNamePrefix"`
 	Buff string `yaml:"buff"`
 	BuffSize int `yaml:"buffSize"`
 	RwLock sync.RWMutex `yaml:"rwLock"`
 	BuffLock sync.RWMutex `yaml:"buffLock"`
+	LessLevel common.LogLevel `yaml:"lessLevel"`
 }
 
 // 时间切分文件输出器
@@ -102,12 +113,18 @@ func (this *CapacityCutFileLogOuter) getFileName() string{
 }
 
 func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
+	if this.LessLevel > logInfo.Level{
+		return
+	}
 	msgFormat := this.MsgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
 	fmt.Println(msg)
 }
 
 func (this *FileLogOuter) Println(logInfo *common.LogInfo ,current LogFileOuterInterface){
+	if this.LessLevel > logInfo.Level{
+		return
+	}
 	msgFormat := this.MsgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
 	this.BuffLock.Lock()
@@ -126,17 +143,28 @@ func (this *FileLogOuter) Println(logInfo *common.LogInfo ,current LogFileOuterI
 	%msg msg
 	%fn filename
  */
-func parseMsgFormat(msgFormat string,logInfo *common.LogInfo) string{
-	msg := msgFormat
-	msg = strings.Replace(msgFormat,"%msg",logInfo.Message,-1)
-	msg = strings.Replace(msgFormat,"%m",logInfo.MethodName,-1)
-	msg = strings.Replace(msgFormat,"%l",common.GetLogLevelStr(logInfo.Level),-1)
-	msg = strings.Replace(msgFormat,"%n",string(logInfo.LineNum),-1)
-	msg = strings.Replace(msgFormat,"%fn",logInfo.FileName,-1)
-	r,_ := regexp.Compile("%t\\(([^)]+)\\)")
-	msg = r.ReplaceAllStringFunc(msg,func(str string)string{
-		rr := r.FindAllStringSubmatch(str,-1)
-		return logInfo.Time.Format(rr[0][1])
-	})
+func parseMsgFormat(msgFormat MsgFormat,logInfo *common.LogInfo) string{
+	msgType := msgFormat.Type
+	format := msgFormat.Format
+	var msg string
+	switch msgType {
+	case "json":
+		b,_ := json.Marshal(logInfo)
+		msg = string(b)
+	case "string":
+		msg = strings.Replace(format,"%msg",logInfo.Message,-1)
+		msg = strings.Replace(format,"%m",logInfo.MethodName,-1)
+		msg = strings.Replace(format,"%l",common.GetLogLevelStr(logInfo.Level),-1)
+		msg = strings.Replace(format,"%n",string(logInfo.LineNum),-1)
+		msg = strings.Replace(format,"%fn",logInfo.FileName,-1)
+		r,_ := regexp.Compile("%t\\(([^)]+)\\)")
+		msg = r.ReplaceAllStringFunc(msg,func(str string)string{
+			rr := r.FindAllStringSubmatch(str,-1)
+			return logInfo.Time.Format(rr[0][1])
+		})
+	default:
+		b,_ := json.Marshal(logInfo)
+		msg = string(b)
+	}
 	return msg
 }
