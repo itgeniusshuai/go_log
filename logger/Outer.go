@@ -52,7 +52,7 @@ type CapacityCutFileLogOuter struct{
 	currentCapacity int64
 }
 
-func (this *TimeCutFileLogOuter) wirteFile(){
+func (this *TimeCutFileLogOuter) writeFile(){
 	this.rwLock.Lock()
 	defer this.rwLock.Unlock()
 	_,err := os.Open(this.filePath)
@@ -68,7 +68,7 @@ func (this *TimeCutFileLogOuter) wirteFile(){
 	this.buff = ""
 }
 
-func (this *CapacityCutFileLogOuter) wirteFile(){
+func (this *CapacityCutFileLogOuter) writeFile(){
 	this.rwLock.Lock()
 	defer this.rwLock.Unlock()
 	_,err := os.Open(this.filePath)
@@ -110,8 +110,11 @@ func (this *FileLogOuter) Println(logInfo *common.LogInfo){
 	this.buff = this.buff + msg
 	defer this.buffLock.Unlock()
 	if this.buffSize <= 0 || len(this.buff) >= this.buffSize {
-		this.wirteFile()
+		this.writeFile()
 	}
+}
+
+func (this *FileLogOuter) writeFile(){
 }
 
 /**
