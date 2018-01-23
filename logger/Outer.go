@@ -17,9 +17,13 @@ type LogOuter interface{
 	Println(logInfo *common.LogInfo)
 }
 
+type LogFileOuterInterface interface {
+	writeFile()
+}
+
 // 控制台输出器
 type ConsoleLogOuter struct{
-	msgFormat string
+	MsgFormat string `yaml:"msgFormat"`
 }
 
 // 文件输出器
@@ -29,60 +33,60 @@ type ConsoleLogOuter struct{
 // 清空缓冲区
 // 如果是容量切分，更新当前容量
 type FileLogOuter struct{
-	msgFormat string
-	filePath string
-	fileNamePrefix string
-	buff string
-	buffSize int
-	rwLock sync.RWMutex
-	buffLock sync.RWMutex
+	MsgFormat string `yaml:"msgFormat"`
+	FilePath string `yaml:"filePath"`
+	FileNamePrefix string `yaml:"fileNamePrefix"`
+	Buff string `yaml:"buff"`
+	BuffSize int `yaml:"buffSize"`
+	RwLock sync.RWMutex `yaml:"rwLock"`
+	BuffLock sync.RWMutex `yaml:"buffLock"`
 }
 
 // 时间切分文件输出器
 type TimeCutFileLogOuter struct{
-	FileLogOuter
-	TimeFormat string
+	FileLogOuter `yaml:"fileLogOuter"`
+	TimeFormat string `yaml:"timeFormat"`
 }
 
 // 容量切分文件输出器
 type CapacityCutFileLogOuter struct{
-	FileLogOuter
-	Capacity int64
+	FileLogOuter `yaml:"fileLogOuter"`
+	Capacity int64 `yaml:"capacity"`
 	lastFileId int64
 	currentCapacity int64
 }
 
 func (this *TimeCutFileLogOuter) writeFile(){
-	this.rwLock.Lock()
-	defer this.rwLock.Unlock()
-	_,err := os.Open(this.filePath)
+	this.RwLock.Lock()
+	defer this.RwLock.Unlock()
+	_,err := os.Open(this.FilePath)
 	if err != nil{
-		os.MkdirAll(this.filePath,os.ModePerm)
+		os.MkdirAll(this.FilePath,os.ModePerm)
 	}
-	fileName := this.filePath + "/" + this.getFileName() + ".log"
+	fileName := this.FilePath + "/" + this.getFileName() + ".log"
 	file, err := os.Open(fileName)
 	if err != nil{
 		file,_ = os.Create(fileName)
 	}
-	file.WriteString(this.buff)
-	this.buff = ""
+	file.WriteString(this.Buff)
+	this.Buff = ""
 }
 
 func (this *CapacityCutFileLogOuter) writeFile(){
-	this.rwLock.Lock()
-	defer this.rwLock.Unlock()
-	_,err := os.Open(this.filePath)
+	this.RwLock.Lock()
+	defer this.RwLock.Unlock()
+	_,err := os.Open(this.FilePath)
 	if err != nil{
-		os.MkdirAll(this.filePath,os.ModePerm)
+		os.MkdirAll(this.FilePath,os.ModePerm)
 	}
-	fileName := this.filePath + "/" + this.getFileName() + ".log"
+	fileName := this.FilePath + "/" + this.getFileName() + ".log"
 	file, err := os.Open(fileName)
 	if err != nil{
 		file,_ = os.Create(fileName)
 	}
-	file.WriteString(this.buff)
-	this.buff = ""
-	this.currentCapacity = int64(len(this.buff)) + this.currentCapacity
+	file.WriteString(this.Buff)
+	this.Buff = ""
+	this.currentCapacity = int64(len(this.Buff)) + this.currentCapacity
 }
 
 func (this *TimeCutFileLogOuter) getFileName() string{
@@ -94,27 +98,24 @@ func (this *CapacityCutFileLogOuter) getFileName() string{
 			atomic.AddInt64(&this.lastFileId,1)
 			this.currentCapacity = int64(0)
 		}
-		return this.fileNamePrefix + "_" + helpers.GetString(this.lastFileId)
+		return this.FileNamePrefix + "_" + helpers.GetString(this.lastFileId)
 }
 
 func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
-	msgFormat := this.msgFormat
+	msgFormat := this.MsgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
 	fmt.Println(msg)
 }
 
-func (this *FileLogOuter) Println(logInfo *common.LogInfo){
-	msgFormat := this.msgFormat
+func (this *FileLogOuter) Println(logInfo *common.LogInfo ,current LogFileOuterInterface){
+	msgFormat := this.MsgFormat
 	msg := parseMsgFormat(msgFormat,logInfo)
-	this.buffLock.Lock()
-	this.buff = this.buff + msg
-	defer this.buffLock.Unlock()
-	if this.buffSize <= 0 || len(this.buff) >= this.buffSize {
-		this.writeFile()
+	this.BuffLock.Lock()
+	this.Buff = this.Buff + msg
+	defer this.BuffLock.Unlock()
+	if this.BuffSize <= 0 || len(this.Buff) >= this.BuffSize {
+		current.writeFile()
 	}
-}
-
-func (this *FileLogOuter) writeFile(){
 }
 
 /**
