@@ -61,7 +61,7 @@ type TimeCutFileLogOuter struct{
 
 // 容量切分文件输出器
 type CapacityCutFileLogOuter struct{
-	FileLogOuter `yaml:"logOuter"`
+	FileLogOuter `yaml:"fileLogOuter"`
 	Capacity int64 `yaml:"capacity"`
 	lastFileId int64
 	currentCapacity int64
@@ -88,7 +88,7 @@ func (this *TimeCutFileLogOuter) WriteFile(){
 	this.Buff = ""
 }
 
-func (this CapacityCutFileLogOuter) WriteFile(){
+func (this *CapacityCutFileLogOuter) WriteFile(){
 	this.RwLock.Lock()
 	defer this.RwLock.Unlock()
 	_,err := os.Open(this.FilePath)
@@ -96,13 +96,13 @@ func (this CapacityCutFileLogOuter) WriteFile(){
 		os.MkdirAll(this.FilePath,os.ModePerm)
 	}
 	fileName := this.FilePath + string(os.PathSeparator) + this.getFileName() + ".log"
-	file, err := os.Open(fileName)
+	file, err := os.OpenFile(fileName,os.O_APPEND,os.ModePerm)
 	if err != nil{
 		file,_ = os.Create(fileName)
 	}
 	file.WriteString(this.Buff)
-	this.Buff = ""
 	this.currentCapacity = int64(len(this.Buff)) + this.currentCapacity
+	this.Buff = ""
 }
 
 func (this *TimeCutFileLogOuter) getFileName() string{

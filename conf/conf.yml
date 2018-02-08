@@ -8,24 +8,24 @@ consoleOuters :
         type: "string"
         format : "[%m] [%t(2006-01-02)] [%msg]"
       lessLevel : 2
-timeCutOuters :
-  - fileLogOuter:
-      logOuter:
-        msgFormat :
-          type: "string"
-          format : "[%m] [%t(2006-01-02)] [%msg]"
-      filePath : "e:\\logs\\go"
-      fileNamePrefix : "info"
-      buffSize : 23
-    timeFormat : "2006-01-02-03"
-#capacityCutOuters :
+#timeCutOuters :
 #  - fileLogOuter:
 #      logOuter:
 #        msgFormat :
 #          type: "string"
-#          format : "%m %t(2016-01-02) %msg"
-#          filePath : ""
-#      fileNamePrefix : ""
-#      buff : 1
-#      buffSize : 20
-#    capacity : 100
+#          format : "[%m] [%t(2006-01-02)] [%msg]\n"
+#      filePath : "e:\\logs\\go"
+#      fileNamePrefix : "info"
+#      buffSize : 23
+#    timeFormat : "2006-01-02-03"
+capacityCutOuters :
+  - fileLogOuter:
+      logOuter:
+        msgFormat :
+          type: "string"
+          format : "%m %t(2016-01-02) %msg\n"
+      filePath : "e:\\logs\\go"
+      fileNamePrefix : "info"
+      buff : 1
+      buffSize : 102400
+    capacity : 10485760
