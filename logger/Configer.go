@@ -9,9 +9,9 @@ import (
 
 // 文件总配置文件
 type ConfigInfo struct{
-	consoleOuters []ConsoleLogOuter
-	timeCutOuters []TimeCutFileLogOuter
-	capacityCutOuters []CapacityCutFileLogOuter
+	ConsoleOuters []ConsoleLogOuter `yaml:"consoleOuters"`
+	TimeCutOuters []TimeCutFileLogOuter `yaml:"timeCutOuters"`
+	CapacityCutOuters []CapacityCutFileLogOuter `yaml:"capacityCutOuters"`
 }
 var LogConfigPath = "../conf/conf.yml"
 
@@ -32,15 +32,15 @@ func InitConfig(logConfigPath string) error{
 			select {
 			case v := <- common.LogChannel:
 				// 遍历所有的outer
-				for _,logOuter := range configInfo.consoleOuters{
+				for _,logOuter := range configInfo.ConsoleOuters{
 					logOuter.Println(v)
 				}
 				// 遍历所有的outer
-				for _,logOuter := range configInfo.timeCutOuters{
+				for _,logOuter := range configInfo.TimeCutOuters{
 					logOuter.Println(v,logOuter)
 				}
 				// 遍历所有的outer
-				for _,logOuter := range configInfo.capacityCutOuters{
+				for _,logOuter := range configInfo.CapacityCutOuters{
 					logOuter.Println(v,logOuter)
 				}
 			}
@@ -51,11 +51,11 @@ func InitConfig(logConfigPath string) error{
 		ticker := time.NewTicker(time.Second*30)
 		ticks := ticker.C
 		for _ = range ticks{
-			for _,logOuter := range configInfo.capacityCutOuters{
-				logOuter.writeFile()
+			for _,logOuter := range configInfo.CapacityCutOuters{
+				logOuter.WriteFile()
 			}
-			for _,logOuter := range configInfo.timeCutOuters{
-				logOuter.writeFile()
+			for _,logOuter := range configInfo.TimeCutOuters{
+				logOuter.WriteFile()
 			}
 		}
 	}()

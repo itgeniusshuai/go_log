@@ -14,7 +14,6 @@ func IsContain(arrs []string,el string) bool{
 	return false
 }
 
-
 func RemoveDuplicatesAndEmpty(a []string) (ret []string){
 	sort.Strings(a)
 	a_len := len(a)
@@ -40,5 +39,37 @@ func GetString(v interface{}) string{
 		result = strconv.Itoa(int(v))
 	}
 	return result
+}
+
+func DistinctByMap(arr []string ) []string{
+	tmp_arr := make([]string, 0)
+	if arr == nil || len(arr) == 0{
+		return tmp_arr
+	}
+	tm := make(map[string]int,0)
+	for _,e := range arr{
+		tm[e] = 0
+	}
+	for k,_ := range tm{
+		tmp_arr = append(tmp_arr, k)
+	}
+	return tmp_arr
+}
+
+func DistinctByCircle(arr []string ) []string{
+	if arr == nil{
+		return nil
+	}
+	size := len(arr)
+	tmpArr := make([]string,0)
+	if size == 0 {
+		return tmpArr
+	}
+	for _,e := range arr{
+		if !IsContain(tmpArr,e){
+			tmpArr = append(tmpArr, e)
+		}
+	}
+	return tmpArr
 }
 

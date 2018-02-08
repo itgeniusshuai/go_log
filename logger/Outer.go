@@ -19,7 +19,7 @@ type LogOuterInterface interface{
 }
 
 type LogFileOuterInterface interface {
-	writeFile()
+	WriteFile()
 }
 
 type MsgFormat struct{
@@ -33,7 +33,7 @@ type LogOuter struct {
 }
 // 控制台输出器
 type ConsoleLogOuter struct{
-	LogOuter
+	LogOuter `yaml:"logOuter"`
 }
 
 // 文件输出器
@@ -43,7 +43,7 @@ type ConsoleLogOuter struct{
 // 清空缓冲区
 // 如果是容量切分，更新当前容量
 type FileLogOuter struct{
-	LogOuter
+	LogOuter `yaml:"logOuter"`
 	FilePath string `yaml:"filePath"`
 	FileNamePrefix string `yaml:"fileNamePrefix"`
 	Buff string `yaml:"buff"`
@@ -61,13 +61,13 @@ type TimeCutFileLogOuter struct{
 
 // 容量切分文件输出器
 type CapacityCutFileLogOuter struct{
-	FileLogOuter `yaml:"fileLogOuter"`
+	FileLogOuter `yaml:"logOuter"`
 	Capacity int64 `yaml:"capacity"`
 	lastFileId int64
 	currentCapacity int64
 }
 
-func (this *TimeCutFileLogOuter) writeFile(){
+func (this TimeCutFileLogOuter) WriteFile(){
 	this.RwLock.Lock()
 	defer this.RwLock.Unlock()
 	_,err := os.Open(this.FilePath)
@@ -83,7 +83,7 @@ func (this *TimeCutFileLogOuter) writeFile(){
 	this.Buff = ""
 }
 
-func (this *CapacityCutFileLogOuter) writeFile(){
+func (this CapacityCutFileLogOuter) WriteFile(){
 	this.RwLock.Lock()
 	defer this.RwLock.Unlock()
 	_,err := os.Open(this.FilePath)
@@ -131,7 +131,7 @@ func (this *FileLogOuter) Println(logInfo *common.LogInfo ,current LogFileOuterI
 	this.Buff = this.Buff + msg
 	defer this.BuffLock.Unlock()
 	if this.BuffSize <= 0 || len(this.Buff) >= this.BuffSize {
-		current.writeFile()
+		current.WriteFile()
 	}
 }
 
@@ -153,10 +153,10 @@ func parseMsgFormat(msgFormat MsgFormat,logInfo *common.LogInfo) string{
 		msg = string(b)
 	case "string":
 		msg = strings.Replace(format,"%msg",logInfo.Message,-1)
-		msg = strings.Replace(format,"%m",logInfo.MethodName,-1)
-		msg = strings.Replace(format,"%l",common.GetLogLevelStr(logInfo.Level),-1)
-		msg = strings.Replace(format,"%n",string(logInfo.LineNum),-1)
-		msg = strings.Replace(format,"%fn",logInfo.FileName,-1)
+		msg = strings.Replace(msg,"%m",logInfo.MethodName,-1)
+		msg = strings.Replace(msg,"%l",common.GetLogLevelStr(logInfo.Level),-1)
+		msg = strings.Replace(msg,"%n",string(logInfo.LineNum),-1)
+		msg = strings.Replace(msg,"%fn",logInfo.FileName,-1)
 		r,_ := regexp.Compile("%t\\(([^)]+)\\)")
 		msg = r.ReplaceAllStringFunc(msg,func(str string)string{
 			rr := r.FindAllStringSubmatch(str,-1)

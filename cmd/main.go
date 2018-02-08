@@ -1,7 +1,16 @@
 package main
 
-import "fmt"
+import "../logger"
 
 func main(){
-	fmt.Println("hello")
+	logger.InitConfig("conf/conf.yml")
+	for i := 0; i < 10000; i++{
+		logger.Info("mmmmmmmmmmmmmmmmmmm"+string(i))
+	}
 }
+
+
+
+
+
+
