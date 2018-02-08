@@ -67,7 +67,7 @@ type CapacityCutFileLogOuter struct{
 	currentCapacity int64
 }
 
-func (this TimeCutFileLogOuter) WriteFile(){
+func (this *TimeCutFileLogOuter) WriteFile(){
 	this.RwLock.Lock()
 	defer this.RwLock.Unlock()
 	_,err := os.Open(this.FilePath)
@@ -75,11 +75,16 @@ func (this TimeCutFileLogOuter) WriteFile(){
 		os.MkdirAll(this.FilePath,os.ModePerm)
 	}
 	fileName := this.FilePath + "/" + this.getFileName() + ".log"
-	file, err := os.Open(fileName)
+	file, err := os.OpenFile(fileName,os.O_APPEND,os.ModePerm)
+	defer file.Close()
 	if err != nil{
 		file,_ = os.Create(fileName)
 	}
-	file.WriteString(this.Buff)
+	fmt.Println(this.Buff)
+	_,err = file.WriteString(this.Buff)
+	if err != nil{
+		fmt.Println("err :",err.Error())
+	}
 	this.Buff = ""
 }
 
@@ -90,7 +95,7 @@ func (this CapacityCutFileLogOuter) WriteFile(){
 	if err != nil{
 		os.MkdirAll(this.FilePath,os.ModePerm)
 	}
-	fileName := this.FilePath + "/" + this.getFileName() + ".log"
+	fileName := this.FilePath + string(os.PathSeparator) + this.getFileName() + ".log"
 	file, err := os.Open(fileName)
 	if err != nil{
 		file,_ = os.Create(fileName)
@@ -101,7 +106,7 @@ func (this CapacityCutFileLogOuter) WriteFile(){
 }
 
 func (this *TimeCutFileLogOuter) getFileName() string{
-	return time.Now().Format(this.TimeFormat)
+	return this.FileNamePrefix+"_"+time.Now().Format(this.TimeFormat)
 }
 
 func (this *CapacityCutFileLogOuter) getFileName() string{

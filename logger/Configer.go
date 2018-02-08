@@ -10,7 +10,7 @@ import (
 // 文件总配置文件
 type ConfigInfo struct{
 	ConsoleOuters []ConsoleLogOuter `yaml:"consoleOuters"`
-	TimeCutOuters []TimeCutFileLogOuter `yaml:"timeCutOuters"`
+	TimeCutOuters []*TimeCutFileLogOuter `yaml:"timeCutOuters"`
 	CapacityCutOuters []CapacityCutFileLogOuter `yaml:"capacityCutOuters"`
 }
 var LogConfigPath = "../conf/conf.yml"

@@ -1,24 +1,23 @@
 consoleOuters :
-  - logOuter :
-      msgFormat :
-        type: "json"
-      lessLevel : 2
+#  - logOuter :
+#      msgFormat :
+#        type: "json"
+#      lessLevel : 2
   - logOuter:
       msgFormat :
         type: "string"
-        format : "%m %t(2016-01-02) %msg"
+        format : "[%m] [%t(2006-01-02)] [%msg]"
       lessLevel : 2
-#timeCutOuters :
-#  - fileLogOuter:
-#      logOuter:
-#        msgFormat :
-#          type: "string"
-#          format : "%m %t(2016-01-02) %msg"
-#      filePath : "e://logs/go/"
-#      fileNamePrefix : ""
-#      buff : 1
-#      buffSize : 23
-#    timeFormat : "2006-01-02 03:04:15"
+timeCutOuters :
+  - fileLogOuter:
+      logOuter:
+        msgFormat :
+          type: "string"
+          format : "[%m] [%t(2006-01-02)] [%msg]"
+      filePath : "e:\\logs\\go"
+      fileNamePrefix : "info"
+      buffSize : 23
+    timeFormat : "2006-01-02-03"
 #capacityCutOuters :
 #  - fileLogOuter:
 #      logOuter:
