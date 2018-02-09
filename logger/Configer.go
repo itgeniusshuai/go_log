@@ -12,6 +12,7 @@ type ConfigInfo struct{
 	ConsoleOuters []*ConsoleLogOuter `yaml:"consoleOuters"`
 	TimeCutOuters []*TimeCutFileLogOuter `yaml:"timeCutOuters"`
 	CapacityCutOuters []*CapacityCutFileLogOuter `yaml:"capacityCutOuters"`
+	FixedFileOuters []*FixedFileLogOuter `yaml:"fixedFileOuter"`
 }
 var LogConfigPath = "../conf/conf.yml"
 
@@ -43,6 +44,11 @@ func InitConfig(logConfigPath string) error{
 				for _,logOuter := range configInfo.CapacityCutOuters{
 					logOuter.Println(v,logOuter)
 				}
+
+				for _,logOuter := range configInfo.FixedFileOuters{
+					logOuter.Println(v,logOuter)
+				}
+
 			}
 		}
 	}()
@@ -52,10 +58,10 @@ func InitConfig(logConfigPath string) error{
 		ticks := ticker.C
 		for _ = range ticks{
 			for _,logOuter := range configInfo.CapacityCutOuters{
-				logOuter.WriteFile()
+				logOuter.WriteFile(logOuter)
 			}
 			for _,logOuter := range configInfo.TimeCutOuters{
-				logOuter.WriteFile()
+				logOuter.WriteFile(logOuter)
 			}
 		}
 	}()

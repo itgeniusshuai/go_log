@@ -19,7 +19,7 @@ type LogOuterInterface interface{
 }
 
 type LogFileOuterInterface interface {
-	WriteFile()
+	GetFileName() (string)
 }
 
 type MsgFormat struct{
@@ -53,6 +53,11 @@ type FileLogOuter struct{
 	LessLevel common.LogLevel `yaml:"lessLevel"`
 }
 
+// 固定文件不切分文件输出器
+type FixedFileLogOuter  struct {
+	FileLogOuter `yaml:"fileLogOuter"`
+}
+
 // 时间切分文件输出器
 type TimeCutFileLogOuter struct{
 	FileLogOuter `yaml:"fileLogOuter"`
@@ -66,36 +71,16 @@ type CapacityCutFileLogOuter struct{
 	lastFileId int64
 }
 
-func (this *TimeCutFileLogOuter) WriteFile(){
+func (this *FileLogOuter) WriteFile(current LogFileOuterInterface){
 	this.RwLock.Lock()
 	defer this.RwLock.Unlock()
 	_,err := os.Open(this.FilePath)
 	if err != nil{
 		os.MkdirAll(this.FilePath,os.ModePerm)
 	}
-	fileName := this.FilePath + "/" + this.getFileName() + ".log"
+	fileName := this.FilePath + string(os.PathSeparator) + current.GetFileName() + ".log"
 	file, err := os.OpenFile(fileName,os.O_APPEND,os.ModePerm)
 	defer file.Close()
-	if err != nil{
-		file,_ = os.Create(fileName)
-	}
-	fmt.Println(this.Buff)
-	_,err = file.WriteString(this.Buff)
-	if err != nil{
-		fmt.Println("err :",err.Error())
-	}
-	this.Buff = ""
-}
-
-func (this *CapacityCutFileLogOuter) WriteFile(){
-	this.RwLock.Lock()
-	defer this.RwLock.Unlock()
-	_,err := os.Open(this.FilePath)
-	if err != nil{
-		os.MkdirAll(this.FilePath,os.ModePerm)
-	}
-	fileName := this.FilePath + string(os.PathSeparator) + this.getFileName() + ".log"
-	file, err := os.OpenFile(fileName,os.O_APPEND,os.ModePerm)
 	if err != nil{
 		file,_ = os.Create(fileName)
 	}
@@ -103,11 +88,15 @@ func (this *CapacityCutFileLogOuter) WriteFile(){
 	this.Buff = ""
 }
 
-func (this *TimeCutFileLogOuter) getFileName() string{
+func (this *FixedFileLogOuter) GetFileName() string{
+	return this.FileNamePrefix
+}
+
+func (this *TimeCutFileLogOuter) GetFileName() string{
 	return this.FileNamePrefix+"_"+time.Now().Format(this.TimeFormat)
 }
 
-func (this *CapacityCutFileLogOuter) getFileName() string{
+func (this *CapacityCutFileLogOuter) GetFileName() string{
 		fileName := this.FilePath + string(os.PathSeparator) + this.FileNamePrefix + "_" + helpers.GetString(this.lastFileId) + ".log"
 		fileSize,_ := getFileSize(fileName)
 		for fileSize > this.Capacity{
@@ -137,7 +126,7 @@ func (this *FileLogOuter) Println(logInfo *common.LogInfo ,current LogFileOuterI
 	this.Buff = this.Buff + msg
 	defer this.BuffLock.Unlock()
 	if this.BuffSize <= 0 || len(this.Buff) >= this.BuffSize {
-		current.WriteFile()
+		this.WriteFile(current)
 	}
 }
 
