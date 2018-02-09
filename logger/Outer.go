@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 	"os"
-	"sync/atomic"
 	"../helpers"
 	"encoding/json"
+	"pkg/errors"
 )
 
 // 日志输出接口
@@ -64,7 +64,6 @@ type CapacityCutFileLogOuter struct{
 	FileLogOuter `yaml:"fileLogOuter"`
 	Capacity int64 `yaml:"capacity"`
 	lastFileId int64
-	currentCapacity int64
 }
 
 func (this *TimeCutFileLogOuter) WriteFile(){
@@ -101,7 +100,6 @@ func (this *CapacityCutFileLogOuter) WriteFile(){
 		file,_ = os.Create(fileName)
 	}
 	file.WriteString(this.Buff)
-	this.currentCapacity = int64(len(this.Buff)) + this.currentCapacity
 	this.Buff = ""
 }
 
@@ -110,9 +108,12 @@ func (this *TimeCutFileLogOuter) getFileName() string{
 }
 
 func (this *CapacityCutFileLogOuter) getFileName() string{
-		if this.currentCapacity >= this.Capacity{
-			atomic.AddInt64(&this.lastFileId,1)
-			this.currentCapacity = int64(0)
+		fileName := this.FilePath + string(os.PathSeparator) + this.FileNamePrefix + "_" + helpers.GetString(this.lastFileId) + ".log"
+		fileSize,_ := getFileSize(fileName)
+		for fileSize > this.Capacity{
+			this.lastFileId ++
+			fileName = this.FilePath + string(os.PathSeparator) + this.FileNamePrefix + "_" + helpers.GetString(this.lastFileId) + ".log"
+			fileSize,_ = getFileSize(fileName)
 		}
 		return this.FileNamePrefix + "_" + helpers.GetString(this.lastFileId)
 }
@@ -172,4 +173,15 @@ func parseMsgFormat(msgFormat MsgFormat,logInfo *common.LogInfo) string{
 		msg = string(b)
 	}
 	return msg
+}
+
+func getFileSize(fileName string) (int64,error){
+	file,err := os.Open(fileName)
+	if err != nil{
+		fmt.Println("open file faild")
+		return -1,errors.New("can't open file: "+fileName)
+	}
+	fileInfo,_ := file.Stat()
+	fileSize := fileInfo.Size()
+	return fileSize,nil
 }
