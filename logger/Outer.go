@@ -18,15 +18,18 @@ type LogOuterInterface interface{
 	Println(logInfo *common.LogInfo)
 }
 
+// 文件输出器扩展方法接口
 type LogFileOuterInterface interface {
 	GetFileName() (string)
 }
 
+// 消息格式，当type为json的时候Format无效
 type MsgFormat struct{
 	Type string `yaml:"type"`
 	Format string `yaml:"format"`
 }
 
+// 输出器基类
 type LogOuter struct {
 	MsgFormat MsgFormat `yaml:"msgFormat"`
 	LessLevel common.LogLevel `yaml:"lessLevel"`
@@ -51,6 +54,8 @@ type FileLogOuter struct{
 	RwLock sync.RWMutex `yaml:"rwLock"`
 	BuffLock sync.RWMutex `yaml:"buffLock"`
 	LessLevel common.LogLevel `yaml:"lessLevel"`
+
+	LogFileOuterInterface
 }
 
 // 固定文件不切分文件输出器
@@ -71,14 +76,15 @@ type CapacityCutFileLogOuter struct{
 	lastFileId int64
 }
 
-func (this *FileLogOuter) WriteFile(current LogFileOuterInterface){
+// 写入文件
+func (this *FileLogOuter) WriteFile(){
 	this.RwLock.Lock()
 	defer this.RwLock.Unlock()
 	_,err := os.Open(this.FilePath)
 	if err != nil{
 		os.MkdirAll(this.FilePath,os.ModePerm)
 	}
-	fileName := this.FilePath + string(os.PathSeparator) + current.GetFileName() + ".log"
+	fileName := this.FilePath + string(os.PathSeparator) + this.GetFileName() + ".log"
 	file, err := os.OpenFile(fileName,os.O_APPEND,os.ModePerm)
 	defer file.Close()
 	if err != nil{
@@ -88,14 +94,17 @@ func (this *FileLogOuter) WriteFile(current LogFileOuterInterface){
 	this.Buff = ""
 }
 
+// 获取要写入文件名
 func (this *FixedFileLogOuter) GetFileName() string{
 	return this.FileNamePrefix
 }
 
+// 获取要写入文件名
 func (this *TimeCutFileLogOuter) GetFileName() string{
 	return this.FileNamePrefix+"_"+time.Now().Format(this.TimeFormat)
 }
 
+// 获取要写入文件名
 func (this *CapacityCutFileLogOuter) GetFileName() string{
 		fileName := this.FilePath + string(os.PathSeparator) + this.FileNamePrefix + "_" + helpers.GetString(this.lastFileId) + ".log"
 		fileSize,_ := getFileSize(fileName)
@@ -107,6 +116,7 @@ func (this *CapacityCutFileLogOuter) GetFileName() string{
 		return this.FileNamePrefix + "_" + helpers.GetString(this.lastFileId)
 }
 
+// 控制台输出器顶级接口实现
 func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
 	if this.LessLevel > logInfo.Level{
 		return
@@ -116,7 +126,8 @@ func (this *ConsoleLogOuter) Println(logInfo *common.LogInfo){
 	fmt.Println(msg)
 }
 
-func (this *FileLogOuter) Println(logInfo *common.LogInfo ,current LogFileOuterInterface){
+// 输出器顶级实现
+func (this *FileLogOuter) Println(logInfo *common.LogInfo){
 	if this.LessLevel > logInfo.Level{
 		return
 	}
@@ -126,7 +137,7 @@ func (this *FileLogOuter) Println(logInfo *common.LogInfo ,current LogFileOuterI
 	this.Buff = this.Buff + msg
 	defer this.BuffLock.Unlock()
 	if this.BuffSize <= 0 || len(this.Buff) >= this.BuffSize {
-		this.WriteFile(current)
+		this.WriteFile()
 	}
 }
 
@@ -164,6 +175,7 @@ func parseMsgFormat(msgFormat MsgFormat,logInfo *common.LogInfo) string{
 	return msg
 }
 
+// 获取文件大小
 func getFileSize(fileName string) (int64,error){
 	file,err := os.Open(fileName)
 	if err != nil{

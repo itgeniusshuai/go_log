@@ -29,6 +29,7 @@ type LogInfo struct{
 	Message string `json:"message"`
 }
 
+// 根据日志级别获取对应的级别字符串
 func GetLogLevelStr(level LogLevel) string{
 	var msg string
 	switch level {

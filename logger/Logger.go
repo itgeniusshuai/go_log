@@ -27,6 +27,7 @@ func Fatal(msg string){
 	log(msg,common.Fatal)
 }
 
+// 封装日志对象，发送到channel
 func log(msg string, level common.LogLevel){
 	pc,file,line,_ := runtime.Caller(1)
 	methodName := runtime.FuncForPC(pc).Name()
@@ -41,6 +42,7 @@ func log(msg string, level common.LogLevel){
 	sendToLogChan(&logInfo)
 }
 
+// 发送到channel
 func sendToLogChan(info *common.LogInfo){
 	common.LogChannel <- info
 }

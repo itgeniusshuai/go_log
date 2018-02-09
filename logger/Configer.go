@@ -27,6 +27,18 @@ func InitConfig(logConfigPath string) error{
 	configInfo := ConfigInfo{}
 	yaml.Unmarshal(b,&configInfo)
 
+	// 遍历所有的outer
+	for _,logOuter := range configInfo.TimeCutOuters{
+		logOuter.LogFileOuterInterface = logOuter
+	}
+	// 遍历所有的outer
+	for _,logOuter := range configInfo.CapacityCutOuters{
+		logOuter.LogFileOuterInterface = logOuter
+	}
+
+	for _,logOuter := range configInfo.FixedFileOuters{
+		logOuter.LogFileOuterInterface = logOuter
+	}
 	// 启动所有的日志器监听log
 	go func (){
 		for {
@@ -38,30 +50,30 @@ func InitConfig(logConfigPath string) error{
 				}
 				// 遍历所有的outer
 				for _,logOuter := range configInfo.TimeCutOuters{
-					logOuter.Println(v,logOuter)
+					logOuter.Println(v)
 				}
 				// 遍历所有的outer
 				for _,logOuter := range configInfo.CapacityCutOuters{
-					logOuter.Println(v,logOuter)
+					logOuter.Println(v)
 				}
 
 				for _,logOuter := range configInfo.FixedFileOuters{
-					logOuter.Println(v,logOuter)
+					logOuter.Println(v)
 				}
 
 			}
 		}
 	}()
-	// 启动定时写文件程序
+	// 启动定时写文件程序，缓存区不满，每30s清空缓存
 	go func (){
 		ticker := time.NewTicker(time.Second*30)
 		ticks := ticker.C
 		for _ = range ticks{
 			for _,logOuter := range configInfo.CapacityCutOuters{
-				logOuter.WriteFile(logOuter)
+				logOuter.WriteFile()
 			}
 			for _,logOuter := range configInfo.TimeCutOuters{
-				logOuter.WriteFile(logOuter)
+				logOuter.WriteFile()
 			}
 		}
 	}()
